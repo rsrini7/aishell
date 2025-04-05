@@ -9,7 +9,10 @@ import (
 	"strings"
 )
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+const (
+	defaultOpenRouterURL   = "https://openrouter.ai/api/v1/chat/completions"
+	defaultOpenRouterModel = "openrouter/quasar-alpha"
+)
 
 // HTTPClient interface
 type HTTPClient interface {
@@ -52,10 +55,20 @@ func GenerateCommand(nlQuery string) (string, error) {
 		return "", errors.New("missing OPENROUTER_API_KEY")
 	}
 
+	openRouterURL := os.Getenv("OPENROUTER_URL")
+	if openRouterURL == "" {
+		openRouterURL = defaultOpenRouterURL
+	}
+
+	openRouterModel := os.Getenv("OPENROUTER_MODEL")
+	if openRouterModel == "" {
+		openRouterModel = defaultOpenRouterModel
+	}
+
 	userPrompt := "Convert the following natural language instruction into a correct shell command only. Do not include explanations.\nInstruction: " + nlQuery
 
 	requestBody := ChatRequest{
-		Model: "openai/gpt-3.5-turbo", // OpenRouter model identifier
+		Model: openRouterModel,
 		Messages: []Message{
 			{Role: "system", Content: "You are a helpful assistant that translates natural language to bash shell commands."},
 			{Role: "user", Content: userPrompt},
@@ -66,14 +79,14 @@ func GenerateCommand(nlQuery string) (string, error) {
 
 	bodyBytes, _ := json.Marshal(requestBody)
 
-	req, err := http.NewRequest("POST", OPENROUTER_URL, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest("POST", openRouterURL, bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		return "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("HTTP-Referer", "https://github.com/yourusername/aishell") // Replace with your actual repo
+	req.Header.Set("HTTP-Referer", "https://github.com/rsrini7/aishell") // Replace with your actual repo
 	req.Header.Set("X-Title", "AI Shell Command Generator")
 
 	resp, err := client.Do(req)
