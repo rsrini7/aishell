@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -67,10 +69,13 @@ func GenerateCommand(nlQuery string) (string, error) {
 
 	userPrompt := "Convert the following natural language instruction into a correct shell command only. Do not include explanations.\nInstruction: " + nlQuery
 
+	osType := runtime.GOOS
+	systemPrompt := fmt.Sprintf("You are a helpful assistant that translates natural language to shell commands. Generate commands for %s operating system only. If a command is not available in the target OS, suggest an alternative that provides similar functionality.", osType)
+
 	requestBody := ChatRequest{
 		Model: openRouterModel,
 		Messages: []Message{
-			{Role: "system", Content: "You are a helpful assistant that translates natural language to bash shell commands."},
+			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userPrompt},
 		},
 		MaxTokens:   100,
